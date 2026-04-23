@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>George Proximity Analytics · Workforce Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f3f2f1;
+    --panel: #ffffff;
+    --panel-hover: #faf9f8;
+    --border: #e1dfdd;
+    --border-dark: #c8c6c4;
+    --text: #252423;
+    --text-secondary: #605e5c;
+    --text-muted: #8a8886;
+    --pbi-yellow: #f2c811;
+    --pbi-yellow-dark: #d4ae0f;
+    --brand-blue: #118dff;
+    --brand-blue-dark: #0078d4;
+    --euphoria: #8a3ffc;
+    --euphoria-dark: #6929c4;
+    --good: #3b8132;
+    --warn: #d97706;
+    --bad: #c4314b;
+    --bad-dark: #a0283c;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 1.6px 3.6px rgba(0,0,0,0.10), 0 0.3px 0.9px rgba(0,0,0,0.07);
+  }
+
+  html, body {
+    background: var(--bg);
+    font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .ribbon {
+    background: #fff; border-bottom: 1px solid var(--border);
+    padding: 6px 16px; display: flex; align-items: center; gap: 12px;
+    height: 44px; box-shadow: var(--shadow-sm);
+  }
+  .ribbon-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: var(--text); }
+  .ribbon-logo-mark {
+    width: 22px; height: 22px;
+    background: linear-gradient(135deg, var(--pbi-yellow) 0%, var(--pbi-yellow-dark) 100%);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #252423; font-weight: 700;
+  }
+  .ribbon-divider { width: 1px; height: 20px; background: var(--border); }
+  .ribbon-title { font-size: 13px; color: var(--text-secondary); }
+  .ribbon-title strong { color: var(--text); font-weight: 600; }
+  .ribbon-spacer { flex: 1; }
+  .ribbon-btn { font-size: 12px; color: var(--text-secondary); padding: 4px 10px; border-radius: 2px; cursor: pointer; }
+  .ribbon-btn:hover { background: var(--bg); }
+
+  .page-header {
+    background: #fff; padding: 14px 24px 12px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .page-title-block h1 { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; margin-bottom: 2px; }
+  .page-title-block .sub { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .page-title-block .sub .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); display: inline-block; box-shadow: 0 0 0 3px rgba(59,129,50,0.15); }
+  .page-refresh { font-size: 11px; color: var(--text-muted); text-align: right; }
+  .page-refresh strong { color: var(--text-secondary); }
+
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 12px; padding: 12px; min-height: calc(100vh - 100px); }
+
+  .filter-pane {
+    background: #fff; border: 1px solid var(--border); border-radius: 2px;
+    padding: 14px; height: fit-content;
+    position: sticky; top: 56px; box-shadow: var(--shadow-sm);
+  }
+  .filter-pane-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .filter-pane-header h3 { font-size: 13px; font-weight: 600; color: var(--text); }
+  .filter-pane-header .chev { color: var(--text-muted); font-size: 11px; }
+
+  .filter-group { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .filter-group:last-child { border-bottom: none; }
+  .filter-group-title {
+    font-size: 11px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 8px;
+  }
+
+  .filter-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 6px; border-radius: 2px; cursor: pointer;
+    font-size: 12px; color: var(--text); margin: 1px 0;
+  }
+  .filter-option:hover { background: var(--bg); }
+  .filter-option input { margin: 0; cursor: pointer; accent-color: var(--brand-blue); }
+  .filter-option .label { flex: 1; }
+
+  .main { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; align-content: start; }
+
+  .card {
+    background: #fff; border: 1px solid var(--border); border-radius: 2px;
+    padding: 14px 16px; box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s; display: flex; flex-direction: column;
+  }
+  .card:hover { box-shadow: var(--shadow-md); }
+
+  .card-title {
+    font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title .ellipsis { color: var(--text-muted); font-weight: 400; cursor: pointer; padding: 0 4px; letter-spacing: 2px; }
+  .card-subtitle { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  .kpi { grid-column: span 3; }
+  .kpi-value {
+    font-size: 32px; font-weight: 300; color: var(--text);
+    line-height: 1.1; font-feature-settings: 'tnum';
+    display: flex; align-items: baseline; gap: 4px;
+  }
+  .kpi-value .unit { font-size: 16px; color: var(--text-secondary); font-weight: 400; }
+  .kpi-value.euphoria-val { color: var(--euphoria); }
+  .kpi-trend { font-size: 11px; margin-top: 6px; display: flex; align-items: center; gap: 4px; color: var(--text-secondary); }
+  .kpi-trend .delta { font-weight: 600; }
+  .kpi-trend .delta.up { color: var(--good); }
+  .kpi-trend .delta.down { color: var(--bad); }
+  .kpi-trend .delta.warn { color: var(--warn); }
+  .kpi-trend .delta.euphoria { color: var(--euphoria); }
+
+  .kpi-spark { height: 24px; margin-top: 6px; display: flex; align-items: flex-end; gap: 2px; }
+  .kpi-spark .bar { flex: 1; border-radius: 1px 1px 0 0; opacity: 0.7; min-height: 2px; }
+
+  .chart-main { grid-column: span 8; min-height: 360px; }
+  .chart-main-canvas { flex: 1; position: relative; min-height: 280px; }
+
+  .chart-legend { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; color: var(--text-secondary); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 12px; height: 4px; border-radius: 1px; }
+  .legend-swatch.dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .proximity-card { grid-column: span 4; min-height: 360px; }
+  .proximity-visual {
+    flex: 1; position: relative;
+    background: radial-gradient(circle at center, #fafafa 0%, #f0eff0 100%);
+    border: 1px solid var(--border); border-radius: 2px;
+    overflow: hidden; min-height: 240px;
+  }
+  .proximity-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .proximity-axis {
+    position: absolute; bottom: 6px; left: 10px; right: 10px;
+    font-size: 9px; color: var(--text-muted);
+    display: flex; justify-content: space-between;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .proximity-tick {
+    position: absolute; bottom: 22px;
+    transform: translateX(-50%);
+    font-size: 8px; color: var(--text-muted);
+    letter-spacing: 0.2px; text-align: center; white-space: nowrap;
+  }
+  .proximity-tick::before {
+    content: ''; display: block;
+    width: 1px; height: 5px;
+    background: var(--border-dark);
+    margin: 0 auto 2px;
+  }
+  .aura-ring {
+    position: absolute; top: 50%;
+    border: 1.5px dashed var(--bad);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.3;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+  .george-marker {
+    position: absolute; top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .george-dot {
+    width: 18px; height: 18px;
+    background: var(--bad); border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(196,49,75,0.2), 0 2px 6px rgba(0,0,0,0.2);
+    animation: georgePulse 2s ease-in-out infinite;
+  }
+  @keyframes georgePulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(196,49,75,0.2), 0 2px 6px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 0 0 10px rgba(196,49,75,0.05), 0 2px 8px rgba(0,0,0,0.25); }
+  }
+  .george-label {
+    position: absolute; top: 22px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; font-weight: 600; color: var(--bad);
+    white-space: nowrap; letter-spacing: 0.3px;
+  }
+  .worker-marker {
+    position: absolute; top: 50%; left: 12%;
+    transform: translate(-50%, -50%); z-index: 4;
+  }
+  .worker-dot {
+    width: 14px; height: 14px;
+    background: var(--brand-blue); border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(17,141,255,0.2), 0 2px 4px rgba(0,0,0,0.15);
+  }
+  .worker-label {
+    position: absolute; top: 18px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; font-weight: 600; color: var(--brand-blue);
+    white-space: nowrap;
+  }
+  .encounter-bolt {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -160%);
+    font-size: 20px; opacity: 0;
+    transition: opacity 0.3s, left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 6;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+  .encounter-bolt.show { opacity: 1; animation: boltPulse 1.4s ease-in-out infinite; }
+  @keyframes boltPulse {
+    0%, 100% { transform: translate(-50%, -160%) scale(1); }
+    50% { transform: translate(-50%, -180%) scale(1.15); }
+  }
+
+  .collision-alert {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: linear-gradient(180deg, #c4314b 0%, #a0283c 100%);
+    color: #fff;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(196,49,75,0.4);
+    z-index: 10;
+    animation: collisionPulse 1.2s ease-in-out infinite;
+  }
+  .collision-alert.show { display: flex; }
+  .collision-icon {
+    font-size: 18px;
+    line-height: 1;
+    animation: collisionShake 0.5s ease-in-out infinite;
+  }
+  .collision-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+  .collision-text strong {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .collision-text span {
+    font-size: 9px;
+    opacity: 0.9;
+    letter-spacing: 0.3px;
+  }
+  @keyframes collisionPulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(196,49,75,0.4), 0 0 0 0 rgba(196,49,75,0.6); }
+    50% { box-shadow: 0 2px 8px rgba(196,49,75,0.4), 0 0 0 8px rgba(196,49,75,0); }
+  }
+  @keyframes collisionShake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+  }
+
+  .encounter-card { grid-column: span 4; min-height: 260px; }
+  .donut-wrap { flex: 1; display: flex; align-items: center; gap: 14px; padding: 6px 0; }
+  .donut-container {
+    position: relative; width: 130px; height: 130px; flex-shrink: 0;
+  }
+  .donut-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .donut-pct {
+    font-size: 26px; font-weight: 300;
+    color: var(--text); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .donut-label {
+    font-size: 9px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px;
+  }
+  .encounter-detail {
+    flex: 1; display: flex; flex-direction: column;
+    gap: 6px; min-width: 0;
+  }
+  .enc-tier { font-size: 13px; font-weight: 600; color: var(--text); }
+  .enc-tier .badge-ring {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; margin-right: 6px; vertical-align: middle;
+  }
+  .enc-venue-text {
+    font-size: 11px; color: var(--text-secondary); line-height: 1.45;
+  }
+  .enc-venue-text strong { color: var(--text); font-weight: 600; }
+  .enc-venue-text em { color: var(--bad); font-style: normal; font-weight: 500; }
+
+  .ev-card { grid-column: span 4; min-height: 260px; }
+  .ev-row {
+    display: grid; grid-template-columns: 1fr auto auto;
+    gap: 8px; align-items: baseline;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-metric { color: var(--text); font-weight: 500; }
+  .ev-base { color: var(--text-muted); font-variant-numeric: tabular-nums; font-size: 11px; }
+  .ev-adj { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ev-adj.prod-color { color: var(--brand-blue); }
+  .ev-adj.euph-color { color: var(--euphoria); }
+  .ev-arrow { color: var(--text-muted); font-size: 10px; }
+  .ev-expected-note {
+    margin-top: 10px; padding: 8px 10px;
+    background: var(--bg); border-left: 2px solid var(--pbi-yellow);
+    font-size: 11px; color: var(--text-secondary); line-height: 1.45;
+  }
+  .ev-expected-note strong { color: var(--text); }
+
+  .scenario-card { grid-column: span 8; min-height: 260px; }
+  .bar-chart { flex: 1; display: flex; flex-direction: column; gap: 7px; margin-top: 6px; }
+  .bar-row { display: grid; grid-template-columns: 180px 1fr 44px; gap: 10px; align-items: center; font-size: 11px; }
+  .bar-label { color: var(--text); font-weight: 500; }
+  .bar-track { height: 20px; background: var(--bg); border-radius: 1px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--brand-blue); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s; }
+  .bar-fill.current { background: var(--pbi-yellow); box-shadow: inset 0 -2px 0 var(--pbi-yellow-dark); }
+  .bar-value { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; text-align: right; }
+  .bar-value.bad { color: var(--bad); }
+  .bar-value.good { color: var(--good); }
+
+  .metrics-card { grid-column: span 12; }
+  table.metric-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 4px; }
+  .metric-table th {
+    text-align: left; font-size: 10px; font-weight: 600;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px;
+    padding: 6px 8px; border-bottom: 1.5px solid var(--border-dark); background: var(--bg);
+  }
+  .metric-table th:last-child, .metric-table td:last-child { text-align: right; }
+  .metric-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); color: var(--text); font-variant-numeric: tabular-nums; }
+  .metric-table tr:hover td { background: var(--panel-hover); }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 10px; font-weight: 600; }
+  .badge.good { background: rgba(59,129,50,0.12); color: var(--good); }
+  .badge.warn { background: rgba(217,118,6,0.12); color: var(--warn); }
+  .badge.bad { background: rgba(196,49,75,0.12); color: var(--bad); }
+  .badge.euphoria { background: rgba(138,63,252,0.12); color: var(--euphoria); }
+
+  .insight-card {
+    grid-column: span 12;
+    background: linear-gradient(90deg, #fff 0%, #fffef5 100%);
+    border-left: 3px solid var(--pbi-yellow);
+  }
+  .insight-content { display: flex; gap: 14px; align-items: flex-start; }
+  .insight-icon {
+    width: 32px; height: 32px; background: var(--pbi-yellow); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px;
+  }
+  .insight-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .insight-text strong { color: var(--text); font-weight: 600; }
+  .insight-text .insight-eyebrow {
+    display: block; font-size: 10px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; font-weight: 600;
+  }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    .filter-pane { position: static; }
+    .chart-main, .proximity-card, .scenario-card, .metrics-card, .encounter-card, .ev-card { grid-column: span 12; }
+  }
+  @media (max-width: 700px) {
+    .kpi { grid-column: span 6; }
+    .main { gap: 8px; }
+    .layout { padding: 8px; gap: 8px; }
+    .bar-row { grid-template-columns: 130px 1fr 40px; }
+    .donut-wrap { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .donut-container { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ribbon">
+  <div class="ribbon-logo">
+    <div class="ribbon-logo-mark">G</div>
+    <span>Workforce Analytics</span>
+  </div>
+  <div class="ribbon-divider"></div>
+  <div class="ribbon-title"><strong>George Proximity Report</strong> · FY26</div>
+  <div class="ribbon-spacer"></div>
+  <div class="ribbon-btn">↻ Refresh</div>
+  <div class="ribbon-btn">⤓ Export</div>
+  <div class="ribbon-btn">⋯ More</div>
+</div>
+
+<div class="page-header">
+  <div class="page-title-block">
+    <h1>George Proximity Productivity Dashboard</h1>
+    <div class="sub">
+      <span><span class="dot"></span>Live · Refreshed just now</span>
+      <span>|</span>
+      <span>Data source: Desk.Sensors.v2</span>
+      <span>|</span>
+      <span>Workspace: HR Analytics (Shared)</span>
+    </div>
+  </div>
+  <div class="page-refresh">
+    <strong>Calibrated to:</strong> George, Operations Analyst<br>
+    <span>Threat model v4.2 · Updated weekly</span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <aside class="filter-pane">
+    <div class="filter-pane-header">
+      <h3>Filters</h3>
+      <span class="chev">▾</span>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Your Location</div>
+      <label class="filter-option">
+        <input type="radio" name="worker" value="home" checked>
+        <span class="label">🏠 Home</span>
+      </label>
+      <label class="filter-option">
+        <input type="radio" name="worker" value="office">
+        <span class="label">🏢 Office</span>
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">George's Status</div>
+      <label class="filter-option">
+        <input type="radio" name="george" value="home">
+        <span class="label">🏠 Working from home</span>
+      </label>
+      <label class="filter-option">
+        <input type="radio" name="george" value="office" checked>
+        <span class="label">🏢 In office</span>
+      </label>
+      <label class="filter-option">
+        <input type="radio" name="george" value="leave-local">
+        <span class="label">🏖 On leave (local)</span>
+      </label>
+      <label class="filter-option">
+        <input type="radio" name="george" value="leave-overseas">
+        <span class="label">✈ On leave (overseas)</span>
+      </label>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Date Range</div>
+      <div style="font-size: 11px; color: var(--text-secondary); padding: 4px 6px;">
+        01 Jul 2025 – 30 Jun 2026<br>
+        <span style="color: var(--text-muted); font-size: 10px;">(locked to fiscal year)</span>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">About This Report</div>
+      <div style="font-size: 11px; color: var(--text-secondary); padding: 4px 6px; line-height: 1.5;">
+        Productivity and Euphoria are modelled as functions of George-distance. Encounter probability is <strong>computed</strong> from current locations — not user-entered.
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="card kpi">
+      <div class="card-title">Productivity Index <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">baseline</div>
+      <div class="kpi-value"><span id="kpi-prod">90</span><span class="unit">%</span></div>
+      <div class="kpi-trend">
+        <span class="delta up" id="kpi-prod-delta">▲ healthy</span>
+      </div>
+      <div class="kpi-spark" id="spark-1"></div>
+    </div>
+
+    <div class="card kpi">
+      <div class="card-title">Euphoria Score <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">psychological lift</div>
+      <div class="kpi-value euphoria-val"><span id="kpi-euph">85</span><span class="unit">%</span></div>
+      <div class="kpi-trend">
+        <span class="delta euphoria" id="kpi-euph-delta">◆ elevated</span>
+      </div>
+      <div class="kpi-spark" id="spark-2"></div>
+    </div>
+
+    <div class="card kpi">
+      <div class="card-title">George Proximity <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">distance (est.)</div>
+      <div class="kpi-value"><span id="kpi-dist">15</span><span class="unit" id="kpi-dist-unit">km</span></div>
+      <div class="kpi-trend">
+        <span class="delta up" id="kpi-dist-delta">▲ safe</span>
+      </div>
+      <div class="kpi-spark" id="spark-3"></div>
+    </div>
+
+    <div class="card kpi">
+      <div class="card-title">Encounter Tier <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">computed</div>
+      <div class="kpi-value"><span id="kpi-risk">Certain</span></div>
+      <div class="kpi-trend">
+        <span id="kpi-risk-delta" class="delta">95% probability</span>
+      </div>
+      <div class="kpi-spark" id="spark-4"></div>
+    </div>
+
+    <div class="card chart-main">
+      <div class="card-title">
+        Productivity &amp; Euphoria by Distance to George
+        <span class="ellipsis">⋯</span>
+      </div>
+      <div class="card-subtitle">Modelled · dual axis · current position marked</div>
+      <div class="chart-main-canvas"><canvas id="mainChart"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <span class="legend-swatch" style="background: var(--brand-blue)"></span>
+          Productivity (left axis · 0–100%)
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background: var(--euphoria)"></span>
+          Euphoria (right axis · 0–100%)
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch dot" style="background: var(--brand-blue); transform: rotate(45deg); border-radius: 2px"></span>
+          Current productivity
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch dot" style="background: var(--euphoria); transform: rotate(45deg); border-radius: 2px"></span>
+          Current euphoria
+        </div>
+      </div>
+    </div>
+
+    <div class="card proximity-card">
+      <div class="card-title">Proximity Map <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">your position anchored · George approaches</div>
+      <div class="proximity-visual" id="proximity-visual">
+        <div class="proximity-grid"></div>
+        <div class="aura-ring" id="ring-1" style="width: 60px; height: 60px;"></div>
+        <div class="aura-ring" id="ring-2" style="width: 120px; height: 120px;"></div>
+        <div class="aura-ring" id="ring-3" style="width: 180px; height: 180px;"></div>
+        <div class="encounter-bolt" id="enc-bolt">⚡</div>
+        <div class="collision-alert" id="collision-alert">
+          <span class="collision-icon">⚠</span>
+          <div class="collision-text">
+            <strong>COLLISION EVENT</strong>
+            <span>Both in office · critical proximity</span>
+          </div>
+        </div>
+        <div class="george-marker" id="george-marker" style="left: 18%;">
+          <div class="george-dot"></div>
+          <div class="george-label">GEORGE</div>
+        </div>
+        <div class="worker-marker">
+          <div class="worker-dot"></div>
+          <div class="worker-label">YOU</div>
+        </div>
+        <div class="proximity-tick" style="left: 18%;">Office<br><span style="opacity:0.6">(collision)</span></div>
+        <div class="proximity-tick" style="left: 40%;">Office<br><span style="opacity:0.6">(~15km)</span></div>
+        <div class="proximity-tick" style="left: 55%;">WFH</div>
+        <div class="proximity-tick" style="left: 72%;">Local leave</div>
+        <div class="proximity-tick" style="left: 92%;">Overseas</div>
+        <div class="proximity-axis">
+          <span>◀ You</span>
+          <span>George zone ▶</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card encounter-card">
+      <div class="card-title">Encounter Probability <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">today's computed chance of bumping into George</div>
+      <div class="donut-wrap">
+        <div class="donut-container">
+          <canvas id="donutChart"></canvas>
+          <div class="donut-center">
+            <div class="donut-pct" id="donut-pct">95%</div>
+            <div class="donut-label">probability</div>
+          </div>
+        </div>
+        <div class="encounter-detail">
+          <div class="enc-tier">
+            <span class="badge-ring" id="enc-tier-dot" style="background: var(--bad)"></span>
+            <span id="enc-tier-label">Certain</span>
+          </div>
+          <div class="enc-venue-text" id="enc-venue">
+            <strong>George is in the same office.</strong> Encounter is functionally guaranteed. He will walk past your desk.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card ev-card">
+      <div class="card-title">Expected Encounter Impact <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">baseline vs. probability-weighted risk</div>
+      <div style="flex: 1; display: flex; flex-direction: column; padding-top: 4px;">
+        <div class="ev-row">
+          <div class="ev-metric">Productivity</div>
+          <div class="ev-base" id="ev-prod-base">base 90%</div>
+          <div class="ev-adj prod-color"><span class="ev-arrow">→</span> <span id="ev-prod-adj">85%</span></div>
+        </div>
+        <div class="ev-row">
+          <div class="ev-metric">Euphoria</div>
+          <div class="ev-base" id="ev-euph-base">base 85%</div>
+          <div class="ev-adj euph-color"><span class="ev-arrow">→</span> <span id="ev-euph-adj">78%</span></div>
+        </div>
+        <div class="ev-row">
+          <div class="ev-metric">Risk-weighted loss</div>
+          <div class="ev-base">&nbsp;</div>
+          <div class="ev-adj" id="ev-loss" style="color: var(--bad)">-12 pts</div>
+        </div>
+        <div class="ev-expected-note" id="ev-note">
+          <strong>Expected-value calc:</strong> base − (P(encounter) × full-encounter cost). The risk-adjusted figures above weight the potential hit by today's computed encounter probability.
+        </div>
+      </div>
+    </div>
+
+    <div class="card scenario-card">
+      <div class="card-title">Productivity by Scenario <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">all George states · ranked · baseline (no encounter)</div>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+    <div class="card metrics-card">
+      <div class="card-title">Derived Workforce Metrics <span class="ellipsis">⋯</span></div>
+      <div class="card-subtitle">auto-calculated</div>
+      <table class="metric-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current</th>
+            <th>Target</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="metric-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card insight-card">
+      <div class="insight-content">
+        <div class="insight-icon">⚡</div>
+        <div class="insight-text">
+          <span class="insight-eyebrow">AI-Generated Insight · Confidence: high</span>
+          <strong id="insight-headline">Productivity is within healthy operating range.</strong><br>
+          <span id="insight-body">George is in the office while you work from home. Favourable separation detected. Maintain configuration.</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ============ MODEL ============
+// Productivity and Euphoria are baseline values from location + George status.
+// Encounter probability is COMPUTED from both locations.
+// Expected-value adjusted numbers: adjusted = base − (P × full-encounter cost).
+
+const scenarios = {
+  // distTier controls marker position on proximity map:
+  // 0.30 = Office (closest to YOU on left), 0.50 = WFH, 0.72 = Local leave, 0.92 = Overseas (far right)
+  // distTier controls marker position on proximity map. Lower = closer to YOU.
+  // 0.18 = COLLISION (both in office), 0.40 = one is in office/one at home (~15km),
+  // 0.55 = both WFH or cross-WFH, 0.72 = local leave, 0.92 = overseas (far right)
+  'home-leave-overseas':   { prodBase: 98, euphBase: 99, dist: 14800000, distLabel: '14,800', distUnit: 'km', distTier: 0.92, collision: false },
+  'home-leave-local':      { prodBase: 94, euphBase: 88, dist: 40000,    distLabel: '40',     distUnit: 'km', distTier: 0.72, collision: false },
+  'home-office':           { prodBase: 96, euphBase: 90, dist: 15000,    distLabel: '15',     distUnit: 'km', distTier: 0.40, collision: false },
+  'home-home':             { prodBase: 88, euphBase: 70, dist: 8000,     distLabel: '8',      distUnit: 'km', distTier: 0.55, collision: false },
+  'office-leave-overseas': { prodBase: 95, euphBase: 97, dist: 14800000, distLabel: '14,800', distUnit: 'km', distTier: 0.92, collision: false },
+  'office-leave-local':    { prodBase: 90, euphBase: 85, dist: 12000,    distLabel: '12',     distUnit: 'km', distTier: 0.72, collision: false },
+  'office-home':           { prodBase: 92, euphBase: 82, dist: 15000,    distLabel: '15',     distUnit: 'km', distTier: 0.40, collision: false },
+  'office-office':         { prodBase: 45, euphBase: 22, dist: 4,        distLabel: '4',      distUnit: 'm',  distTier: 0.18, collision: true },
+};
+
+const scenarioLabels = {
+  'home-leave-overseas':   'You:Home / G:Overseas',
+  'home-leave-local':      'You:Home / G:Local leave',
+  'home-office':           'You:Home / G:Office',
+  'home-home':             'You:Home / G:Home',
+  'office-leave-overseas': 'You:Office / G:Overseas',
+  'office-leave-local':    'You:Office / G:Local leave',
+  'office-home':           'You:Office / G:Home',
+  'office-office':         'You:Office / G:Office',
+};
+
+// Encounter probability is computed from George's status and yours.
+const encounterMatrix = {
+  'office-office':         { pct: 95, tier: 'Certain',  venue: '<strong>George is in the same office.</strong> Encounter is functionally guaranteed. He will walk past your desk.' },
+  'home-office':           { pct: 35, tier: 'Moderate', venue: '<strong>You\'re at home, George is in the office.</strong> Physical encounter unlikely — but he\'ll likely @-mention you on Teams by 2pm.' },
+  'office-leave-local':    { pct: 55, tier: 'Elevated', venue: '<strong>George is on local leave.</strong> Potential to bump into him at <em>the café across the road</em> on your lunch break. Awkward hover incoming.' },
+  'home-leave-local':      { pct: 30, tier: 'Moderate', venue: '<strong>George is on local leave, you\'re at home.</strong> Minimal chance of running into him at <em>supermarket or your favourite bakery</em> on your lunch walk.' },
+  'office-home':           { pct: 20, tier: 'Low',      venue: '<strong>George is working from home.</strong> Possible video-call appearance. No physical encounter risk today.' },
+  'home-home':             { pct: 10, tier: 'Low',      venue: '<strong>Both of you WFH.</strong> Only encounter risk is a surprise calendar invite with "quick chat?" in the title.' },
+  'office-leave-overseas': { pct: 0,  tier: 'None',     venue: '<strong>George is overseas.</strong> Zero encounter risk. Separated by oceans, time zones, and one missing return flight.' },
+  'home-leave-overseas':   { pct: 0,  tier: 'None',     venue: '<strong>George is overseas, you\'re at home.</strong> Zero encounter probability. Today is yours.' },
+};
+
+const state = { worker: 'home', george: 'office' };
+
+function currentScenarioKey() { return `${state.worker}-${state.george}`; }
+function currentScenario() {
+  const key = currentScenarioKey();
+  return { key, ...scenarios[key] };
+}
+function currentEncounter() {
+  return encounterMatrix[currentScenarioKey()];
+}
+
+// Expected-value impact: a full encounter costs 20 productivity pts and 35 euphoria pts
+function expectedValues() {
+  const s = currentScenario();
+  const enc = currentEncounter();
+  const p = enc.pct / 100;
+  const prodHit = 20 * p;
+  const euphHit = 35 * p;
+  return {
+    prodBase: s.prodBase,
+    euphBase: s.euphBase,
+    prodAdj: Math.max(0, Math.round(s.prodBase - prodHit)),
+    euphAdj: Math.max(0, Math.round(s.euphBase - euphHit)),
+    prodLost: Math.round(prodHit),
+    euphLost: Math.round(euphHit),
+    totalLoss: Math.round(prodHit + euphHit),
+  };
+}
+
+// ============ CHART ============
+function productivityAtDistance(metres) {
+  const logD = Math.log10(Math.max(metres, 0.5));
+  const p = 40 + 60 / (1 + Math.exp(-(logD - 1.5) * 1.2));
+  return Math.min(100, Math.max(0, p));
+}
+function euphoriaAtDistance(metres) {
+  const logD = Math.log10(Math.max(metres, 0.5));
+  const e = 15 + 85 / (1 + Math.exp(-(logD - 2.2) * 1.3));
+  return Math.min(100, Math.max(0, e));
+}
+
+const curveDistances = [1, 4, 10, 50, 500, 5000, 50000, 500000, 15000000];
+const curveLabels = ['1m', '4m', '10m', '50m', '500m', '5km', '50km', '500km', '15,000km'];
+
+let mainChart, donutChart;
+function initCharts() {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: curveLabels,
+      datasets: [
+        {
+          label: 'Productivity', yAxisID: 'y',
+          data: curveDistances.map(d => Math.round(productivityAtDistance(d))),
+          borderColor: '#118dff', backgroundColor: 'rgba(17,141,255,0.10)',
+          borderWidth: 2.5, fill: true, tension: 0.35,
+          pointRadius: 0, pointHoverRadius: 5,
+        },
+        {
+          label: 'Euphoria', yAxisID: 'y1',
+          data: curveDistances.map(d => Math.round(euphoriaAtDistance(d))),
+          borderColor: '#8a3ffc', backgroundColor: 'rgba(138,63,252,0.08)',
+          borderWidth: 2.5, fill: false, tension: 0.35,
+          pointRadius: 0, pointHoverRadius: 5,
+        },
+        {
+          label: 'Current (prod.)', yAxisID: 'y', data: [],
+          borderColor: '#0078d4', backgroundColor: '#118dff',
+          borderWidth: 2, pointRadius: 7, pointHoverRadius: 9,
+          pointStyle: 'rectRot', showLine: false,
+        },
+        {
+          label: 'Current (euph.)', yAxisID: 'y1', data: [],
+          borderColor: '#6929c4', backgroundColor: '#8a3ffc',
+          borderWidth: 2, pointRadius: 7, pointHoverRadius: 9,
+          pointStyle: 'rectRot', showLine: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#252423',
+          titleFont: { family: 'Segoe UI', size: 11, weight: '600' },
+          bodyFont: { family: 'Segoe UI', size: 11 },
+          padding: 8, cornerRadius: 2, displayColors: true,
+          callbacks: {
+            label: (ctx) => ctx.parsed.y == null ? null : `${ctx.dataset.label}: ${ctx.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Distance to George', font: { size: 10 }, color: '#605e5c' },
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { family: 'Segoe UI', size: 10 }, color: '#605e5c' }
+        },
+        y: {
+          position: 'left',
+          title: { display: true, text: 'Productivity (%)', font: { size: 10 }, color: '#118dff' },
+          min: 0, max: 100,
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { family: 'Segoe UI', size: 10 }, color: '#118dff', callback: v => v + '%' }
+        },
+        y1: {
+          position: 'right',
+          title: { display: true, text: 'Euphoria (%)', font: { size: 10 }, color: '#8a3ffc' },
+          min: 0, max: 100,
+          grid: { drawOnChartArea: false },
+          ticks: { font: { family: 'Segoe UI', size: 10 }, color: '#8a3ffc', callback: v => v + '%' }
+        }
+      }
+    }
+  });
+
+  const dctx = document.getElementById('donutChart').getContext('2d');
+  donutChart = new Chart(dctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Encounter risk', 'Remaining'],
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ['#c4314b', '#f3f2f1'],
+        borderWidth: 0,
+        circumference: 360,
+        rotation: -90,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      cutout: '72%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#252423',
+          titleFont: { family: 'Segoe UI', size: 11, weight: '600' },
+          bodyFont: { family: 'Segoe UI', size: 11 },
+          padding: 8, cornerRadius: 2, displayColors: false,
+          callbacks: { label: (c) => `${c.label}: ${c.parsed}%` }
+        }
+      },
+      animation: { animateRotate: true, duration: 600 }
+    }
+  });
+}
+
+// ============ RENDER ============
+function tierColor(tier) {
+  if (tier === 'Certain' || tier === 'High' || tier === 'Elevated') return 'var(--bad)';
+  if (tier === 'Moderate') return 'var(--warn)';
+  if (tier === 'Low') return 'var(--good)';
+  return 'var(--text-muted)';
+}
+
+function render() {
+  const scenario = currentScenario();
+  const enc = currentEncounter();
+  const ev = expectedValues();
+
+  // KPIs show BASELINE values
+  document.getElementById('kpi-prod').textContent = ev.prodBase;
+  const prodDelta = document.getElementById('kpi-prod-delta');
+  if (ev.prodBase >= 90) { prodDelta.className = 'delta up'; prodDelta.textContent = '▲ healthy'; }
+  else if (ev.prodBase >= 70) { prodDelta.className = 'delta warn'; prodDelta.textContent = '● nominal'; }
+  else if (ev.prodBase >= 45) { prodDelta.className = 'delta warn'; prodDelta.textContent = '▼ impaired'; }
+  else { prodDelta.className = 'delta down'; prodDelta.textContent = '▼ critical'; }
+
+  document.getElementById('kpi-euph').textContent = ev.euphBase;
+  const euphDelta = document.getElementById('kpi-euph-delta');
+  if (ev.euphBase >= 90) { euphDelta.className = 'delta euphoria'; euphDelta.textContent = '◆ peak joy'; }
+  else if (ev.euphBase >= 70) { euphDelta.className = 'delta euphoria'; euphDelta.textContent = '◆ elevated'; }
+  else if (ev.euphBase >= 40) { euphDelta.className = 'delta warn'; euphDelta.textContent = '◆ subdued'; }
+  else { euphDelta.className = 'delta down'; euphDelta.textContent = '◆ collapsed'; }
+
+  document.getElementById('kpi-dist').textContent = scenario.distLabel;
+  document.getElementById('kpi-dist-unit').textContent = scenario.distUnit;
+  const distDelta = document.getElementById('kpi-dist-delta');
+  if (scenario.dist >= 1000000) { distDelta.className = 'delta up'; distDelta.textContent = '▲ safe zone'; }
+  else if (scenario.dist >= 1000) { distDelta.className = 'delta up'; distDelta.textContent = '▲ low risk'; }
+  else if (scenario.dist >= 100) { distDelta.className = 'delta warn'; distDelta.textContent = '● moderate'; }
+  else { distDelta.className = 'delta down'; distDelta.textContent = '▼ critical'; }
+
+  document.getElementById('kpi-risk').textContent = enc.tier;
+  const kpiRiskDelta = document.getElementById('kpi-risk-delta');
+  kpiRiskDelta.className = enc.pct >= 50 ? 'delta down' : (enc.pct >= 20 ? 'delta warn' : 'delta up');
+  kpiRiskDelta.textContent = `${enc.pct}% probability`;
+
+  drawSparkline('spark-1', ev.prodBase, '#118dff');
+  drawSparkline('spark-2', ev.euphBase, '#8a3ffc');
+  drawSparkline('spark-3', Math.min(100, Math.log10(scenario.dist + 1) * 15), '#2ba199');
+  drawSparkline('spark-4', enc.pct, '#c4314b');
+
+  // Proximity map — YOU stays anchored at left (12%), George moves based on distTier
+  // distTier = 0.30 for Office (closest), 0.92 for Overseas (furthest)
+  const pct = scenario.distTier * 100;
+  document.getElementById('george-marker').style.left = `${pct}%`;
+
+  // Aura rings scale with closeness (inverse of distTier)
+  const closeness = 1 - scenario.distTier;
+  const intensity = closeness * 12;
+  [1, 2, 3].forEach(i => {
+    const r = document.getElementById(`ring-${i}`);
+    const baseSize = 40 + (i - 1) * 40;
+    const size = baseSize * Math.max(0.3, intensity / 5);
+    r.style.width = `${size}px`;
+    r.style.height = `${size}px`;
+    r.style.opacity = intensity > (i - 1) * 2.5 ? (0.5 - (i - 1) * 0.1) : 0.03;
+    r.style.left = `${pct}%`;
+  });
+
+  const bolt = document.getElementById('enc-bolt');
+  if (enc.pct >= 30) {
+    bolt.classList.add('show');
+    bolt.style.left = `${pct}%`;
+  } else {
+    bolt.classList.remove('show');
+  }
+
+  // Collision alert — both in office
+  const collisionAlert = document.getElementById('collision-alert');
+  if (scenario.collision) {
+    collisionAlert.classList.add('show');
+  } else {
+    collisionAlert.classList.remove('show');
+  }
+
+  // Main chart — mark current position
+  if (mainChart) {
+    let nearestIdx = 0, minDiff = Infinity;
+    curveDistances.forEach((cd, i) => {
+      const diff = Math.abs(Math.log10(cd) - Math.log10(Math.max(scenario.dist, 1)));
+      if (diff < minDiff) { minDiff = diff; nearestIdx = i; }
+    });
+    const prodPoint = Array(curveDistances.length).fill(null);
+    const euphPoint = Array(curveDistances.length).fill(null);
+    prodPoint[nearestIdx] = ev.prodBase;
+    euphPoint[nearestIdx] = ev.euphBase;
+    mainChart.data.datasets[2].data = prodPoint;
+    mainChart.data.datasets[3].data = euphPoint;
+    mainChart.update('none');
+  }
+
+  // Donut
+  if (donutChart) {
+    const donutColor = enc.pct >= 50 ? '#c4314b' : (enc.pct >= 20 ? '#d97706' : '#3b8132');
+    donutChart.data.datasets[0].data = [enc.pct, 100 - enc.pct];
+    donutChart.data.datasets[0].backgroundColor = [donutColor, '#f3f2f1'];
+    donutChart.update();
+  }
+  document.getElementById('donut-pct').textContent = `${enc.pct}%`;
+  document.getElementById('enc-tier-label').textContent = enc.tier;
+  document.getElementById('enc-tier-dot').style.background = tierColor(enc.tier);
+  document.getElementById('enc-venue').innerHTML = enc.venue;
+
+  // Expected value card
+  document.getElementById('ev-prod-base').textContent = `base ${ev.prodBase}%`;
+  document.getElementById('ev-euph-base').textContent = `base ${ev.euphBase}%`;
+  document.getElementById('ev-prod-adj').textContent = `${ev.prodAdj}%`;
+  document.getElementById('ev-euph-adj').textContent = `${ev.euphAdj}%`;
+  document.getElementById('ev-loss').textContent = ev.totalLoss > 0 ? `-${ev.totalLoss} pts` : '—';
+  document.getElementById('ev-loss').style.color = ev.totalLoss > 0 ? 'var(--bad)' : 'var(--good)';
+
+  const evNote = document.getElementById('ev-note');
+  if (enc.pct === 0) {
+    evNote.innerHTML = '<strong>Zero encounter probability.</strong> Baseline numbers stand. No adjustment needed. Enjoy.';
+  } else if (enc.pct >= 80) {
+    evNote.innerHTML = `<strong>High-certainty encounter.</strong> Expected losses are already largely realised — adjusted figures represent the likely outcome for the day. Brace.`;
+  } else if (enc.pct >= 40) {
+    evNote.innerHTML = `<strong>Material encounter risk.</strong> Adjusted figures are probability-weighted. Actual outcome depends on your lunch timing and route selection.`;
+  } else {
+    evNote.innerHTML = `<strong>Low encounter risk.</strong> Adjustment is small — baseline remains a reasonable forecast.`;
+  }
+
+  renderScenarioBars();
+  renderMetricsTable(ev.prodBase, ev.euphBase);
+  renderInsight(ev, scenario, enc);
+}
+
+function drawSparkline(id, valueHint, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '';
+  const n = 12;
+  for (let i = 0; i < n; i++) {
+    const wave = Math.sin((i + valueHint * 0.1) * 0.9) * 8;
+    const h = Math.max(3, Math.min(24, valueHint * 0.2 + wave + 6));
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = `${h}px`;
+    b.style.background = color;
+    el.appendChild(b);
+  }
+}
+
+function renderScenarioBars() {
+  const tbody = document.getElementById('bar-chart');
+  tbody.innerHTML = '';
+  const curKey = currentScenarioKey();
+  const rows = Object.entries(scenarios)
+    .map(([k, v]) => ({ key: k, label: scenarioLabels[k], ...v }))
+    .sort((a, b) => b.prodBase - a.prodBase);
+  rows.forEach(r => {
+    const isCurrent = r.key === curKey;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const cls = r.prodBase >= 90 ? 'good' : (r.prodBase < 60 ? 'bad' : '');
+    row.innerHTML = `
+      <div class="bar-label">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${isCurrent ? 'current' : ''}" style="width: ${r.prodBase}%"></div>
+      </div>
+      <div class="bar-value ${cls}">${r.prodBase}%</div>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function renderMetricsTable(prod, euph) {
+  const tbody = document.getElementById('metric-tbody');
+  tbody.innerHTML = '';
+  const pf = prod / 100;
+  const ef = euph / 100;
+
+  const metrics = [
+    {
+      name: 'Coffee breaks / hour',
+      current: (1 + (1 - pf) * 7).toFixed(1),
+      target: '1.5',
+      status: pf >= 0.9 ? 'good' : (pf >= 0.5 ? 'warn' : 'bad'),
+      label: pf >= 0.9 ? 'On target' : (pf >= 0.5 ? 'Above target' : 'Excessive'),
+    },
+    {
+      name: 'Meaningful keystrokes',
+      current: Math.round(pf * 1200).toLocaleString(),
+      target: '1,000',
+      status: pf >= 0.85 ? 'good' : (pf >= 0.5 ? 'warn' : 'bad'),
+      label: pf >= 0.85 ? 'Healthy' : (pf >= 0.5 ? 'Below target' : 'Concerning'),
+    },
+    {
+      name: 'Existential dread index',
+      current: Math.min(9.9, (1 - ef) * 10).toFixed(1),
+      target: '< 3.0',
+      status: ef >= 0.7 ? 'good' : (ef >= 0.4 ? 'warn' : 'bad'),
+      label: ef >= 0.7 ? 'Manageable' : (ef >= 0.4 ? 'Elevated' : 'Clinical'),
+    },
+    {
+      name: 'Minutes until next snack',
+      current: Math.max(1, Math.round(pf * 55)),
+      target: '45',
+      status: pf >= 0.75 ? 'good' : (pf >= 0.4 ? 'warn' : 'bad'),
+      label: pf >= 0.75 ? 'Normal' : (pf >= 0.4 ? 'Early' : 'Immediate'),
+    },
+    {
+      name: 'Whistling-to-self rate',
+      current: (ef * 4.5).toFixed(1) + '/hr',
+      target: '> 1.0',
+      status: ef >= 0.7 ? 'euphoria' : (ef >= 0.4 ? 'warn' : 'bad'),
+      label: ef >= 0.7 ? 'Cheerful' : (ef >= 0.4 ? 'Muted' : 'Silent'),
+    },
+    {
+      name: 'Smile : frown ratio',
+      current: (ef > 0.05 ? (ef / Math.max(0.1, 1 - ef)).toFixed(2) : '0.05') + ':1',
+      target: '> 1.00',
+      status: ef >= 0.7 ? 'euphoria' : (ef >= 0.4 ? 'warn' : 'bad'),
+      label: ef >= 0.7 ? 'Radiant' : (ef >= 0.4 ? 'Neutral' : 'Grim'),
+    },
+  ];
+
+  metrics.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${m.name}</td>
+      <td>${m.current}</td>
+      <td style="color: var(--text-muted)">${m.target}</td>
+      <td><span class="badge ${m.status}">${m.label}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderInsight(ev, scenario, enc) {
+  const headline = document.getElementById('insight-headline');
+  const body = document.getElementById('insight-body');
+  const key = currentScenarioKey();
+
+  if (key === 'office-office') {
+    headline.textContent = `Critical proximity event — productivity ${ev.prodBase}%, euphoria ${ev.euphBase}%.`;
+    body.textContent = `George is ${scenario.distLabel}${scenario.distUnit} away. Same office. Same pod, likely. Euphoria has collapsed. Encounter probability ${enc.pct}% — functionally certain. Recommend relocating to the quiet room, the server room, or any room containing no George.`;
+    return;
+  }
+  if (key === 'home-leave-overseas' || key === 'office-leave-overseas') {
+    headline.textContent = `Peak operating conditions — George ${scenario.distLabel}${scenario.distUnit} away.`;
+    body.textContent = `Maximum feasible George-distance achieved. Euphoria at ${ev.euphBase}% — the rare unqualified high. Productivity ${ev.prodBase}%. Encounter probability: ${enc.pct}%. You can hear yourself think. Treasure this. Do not schedule any meetings.`;
+    return;
+  }
+  if (enc.pct >= 50) {
+    headline.textContent = `Elevated encounter risk — ${enc.pct}% probability today.`;
+    body.innerHTML = `Baseline productivity is ${ev.prodBase}%, but expected value after encounter risk drops to <strong>${ev.prodAdj}%</strong>. Rehearsing a polite exit line is advised. Consider a different lunch spot.`;
+    return;
+  }
+  if (enc.pct >= 20) {
+    headline.textContent = `Moderate encounter risk detected (${enc.pct}%).`;
+    body.innerHTML = `${scenarioLabels[key]}. Baseline productivity ${ev.prodBase}%, risk-adjusted ${ev.prodAdj}%. Low-grade vigilance recommended. Ordering lunch via app remains viable.`;
+    return;
+  }
+  headline.textContent = `Favourable George configuration — productivity ${ev.prodBase}%, euphoria ${ev.euphBase}%.`;
+  body.textContent = `${scenarioLabels[key]}. Encounter probability ${enc.pct}%. Comfortable separation maintained. Recommend quietly doing a good job and not mentioning this to anyone.`;
+}
+
+// ============ EVENTS ============
+document.querySelectorAll('input[name="worker"]').forEach(el => {
+  el.addEventListener('change', () => { state.worker = el.value; render(); });
+});
+document.querySelectorAll('input[name="george"]').forEach(el => {
+  el.addEventListener('change', () => { state.george = el.value; render(); });
+});
+
+// ============ INIT ============
+initCharts();
+render();
+</script>
+</body>
+</html>
